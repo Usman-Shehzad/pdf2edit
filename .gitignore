@@ -1,0 +1,61 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js build & output
+/.next/
+/out/
+
+# production output
+/build
+/dist
+
+# misc & OS garbage
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.pem
+
+# debug & logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# turbopack & caches
+.turbo
+*.tmp
+*.temp
+*~
+*.swp
+*.swo
+
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE & editors
+.idea/
+*.sublime-project
+*.sublime-workspace

@@ -16,7 +16,7 @@ export async function getPdfJs() {
   return pdfjsLibInstance;
 }
 
-export async function loadPdfDocument(data: ArrayBuffer): Promise<PDFDocumentProxy> {
+export async function loadPdfDocument(data: ArrayBuffer, password?: string): Promise<PDFDocumentProxy> {
   const pdfjs = await getPdfJs();
   if (!pdfjs) {
     throw new Error('PDF.js could not be loaded in this environment');
@@ -25,6 +25,7 @@ export async function loadPdfDocument(data: ArrayBuffer): Promise<PDFDocumentPro
   // Fast local loading using local static cMaps and standard fonts (Zero network requests!)
   const loadingTask = pdfjs.getDocument({
     data: data.slice(0),
+    password,
     cMapUrl: '/cmaps/',
     cMapPacked: true,
     standardFontDataUrl: '/standard_fonts/',

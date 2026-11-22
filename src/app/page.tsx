@@ -1,78 +1,62 @@
-'use client';
-
-import React, { useState } from 'react';
-import dynamic from 'next/dynamic';
-import { PdfDropzone } from '@/components/pdf/PdfDropzone';
-
-// Dynamically import PdfEditor with ssr: false so PDF.js and Canvas only run in the browser
-const PdfEditor = dynamic(
-  () => import('@/components/pdf/PdfEditor').then((mod) => mod.PdfEditor),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100">
-        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-slate-600 font-semibold text-sm">Initializing secure PDF engine...</p>
-      </div>
-    ),
-  }
-);
+import Link from 'next/link';
+import { ArrowRight, ShieldCheck, Zap, WifiOff } from 'lucide-react';
+import { TOOLS } from '@/lib/tools/registry';
+import { SiteHeader, SiteFooter } from '@/components/site/SiteChrome';
+import { ToolIcon } from '@/components/tools/ToolIcon';
 
 export default function Home() {
-  const [file, setFile] = useState<File | null>(null);
-  const [arrayBuffer, setArrayBuffer] = useState<ArrayBuffer | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleFileLoaded = (loadedFile: File, buffer: ArrayBuffer) => {
-    setIsLoading(true);
-    setFile(loadedFile);
-    setArrayBuffer(buffer);
-    setIsLoading(false);
-  };
-
-  const handleReset = () => {
-    setFile(null);
-    setArrayBuffer(null);
-  };
-
-  if (file && arrayBuffer) {
-    return (
-      <PdfEditor
-        initialFile={file}
-        initialArrayBuffer={arrayBuffer}
-        onReset={handleReset}
-      />
-    );
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-aurora">
-      <header className="glass sticky top-0 z-20 border-b border-slate-200/60">
-        <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2.5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="PDF2Edit logo" className="w-10 h-10 object-contain drop-shadow" />
-            <span className="font-extrabold text-lg tracking-tight text-slate-900">
-              PDF<span className="text-gradient">2Edit</span>
-            </span>
-          </a>
-          <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5">
-            <span className="relative flex w-2 h-2">
-              <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-400 opacity-60 animate-ping" />
-              <span className="relative inline-flex w-2 h-2 rounded-full bg-emerald-500" />
-            </span>
-            Files never leave your device
+      <SiteHeader />
+      <main className="flex-1 px-5 pt-14">
+        <section className="max-w-4xl mx-auto text-center animate-rise">
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.05]">
+            Every PDF tool you need. <span className="text-gradient">Private by design.</span>
+          </h1>
+          <p className="mt-5 text-lg text-slate-600 max-w-2xl mx-auto">
+            Edit, sign, merge, split, compress and convert PDFs right in your browser. Your files never leave your device.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3 text-sm font-semibold text-slate-600">
+            {[[ShieldCheck, 'No uploads'], [Zap, 'Instant, no waiting'], [WifiOff, 'Works offline']].map(([Icon, label]) => {
+              const I = Icon as typeof ShieldCheck;
+              return (
+                <span key={label as string} className="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-slate-200 px-3 py-1.5">
+                  <I className="w-4 h-4 text-blue-600" /> {label as string}
+                </span>
+              );
+            })}
           </div>
-        </div>
-      </header>
+        </section>
 
-      <main className="flex-1">
-        <PdfDropzone onFileLoaded={handleFileLoaded} isLoading={isLoading} />
+        <section className="max-w-6xl mx-auto mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-4" aria-label="PDF tools">
+          <Link href="/edit" className="sm:col-span-2 lg:col-span-3 group relative overflow-hidden rounded-3xl bg-linear-to-r from-blue-700 via-blue-600 to-cyan-500 p-6 sm:p-8 text-white shadow-xl shadow-blue-600/25 hover:shadow-2xl transition-shadow">
+            <div className="flex items-center gap-5">
+              <span className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center shrink-0"><ToolIcon slug="edit" className="w-7 h-7" /></span>
+              <div className="flex-1">
+                <h2 className="text-xl sm:text-2xl font-extrabold">Edit &amp; Sign PDF</h2>
+                <p className="text-blue-50/90 text-sm sm:text-base mt-1">Click-to-edit text, signatures, real redaction, annotations and page organiser.</p>
+              </div>
+              <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform hidden sm:block" />
+            </div>
+          </Link>
+
+          {TOOLS.map((t, i) => (
+            <Link
+              key={t.slug}
+              href={`/tools/${t.slug}`}
+              style={{ animationDelay: `${i * 60}ms` }}
+              className="animate-rise group p-5 rounded-2xl bg-white/85 border border-slate-200/80 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all"
+            >
+              <span className={`w-11 h-11 rounded-xl bg-linear-to-br ${t.tone} text-white flex items-center justify-center shadow-md mb-3`}>
+                <ToolIcon slug={t.slug} className="w-5 h-5" />
+              </span>
+              <h2 className="font-bold text-slate-900">{t.name}</h2>
+              <p className="text-sm text-slate-500 mt-1 leading-relaxed">{t.tagline}</p>
+            </Link>
+          ))}
+        </section>
       </main>
-
-      <footer className="border-t border-slate-200/70 py-6 text-center text-xs text-slate-500">
-        PDF2Edit · Private, in-browser PDF editing · No uploads, no tracking
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

@@ -1,6 +1,8 @@
 'use client';
 
-import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, degrees, LineCapStyle } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
+import { loadPdfDocument, renderPdfPage } from '@/lib/pdf/loader';
 import type { Annotation, PageInfo } from '@/types/pdf';
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
@@ -19,6 +21,40 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
   };
 }
 
+// Characters WinAnsi (the standard PDF fonts) cannot encode
+function needsUnicodeFont(text: string): boolean {
+  for (const ch of text) {
+    const cp = ch.codePointAt(0)!;
+    if (cp > 0xff && !(cp >= 0x2013 && cp <= 0x2026) && cp !== 0x20ac && cp !== 0x2122) return true;
+  }
+  return false;
+}
+
+/**
+ * Rasterises a page with redaction boxes burned in, so the covered text/graphics
+ * no longer exist anywhere in the output file (unlike a vector rectangle on top).
+ */
+async function rasterizeRedactedPage(
+  pdfjsDoc: Awaited<ReturnType<typeof loadPdfDocument>>,
+  sourceIndex: number,
+  rotation: number,
+  redactions: Extract<Annotation, { type: 'redact' }>[],
+  scale = 2.5
+): Promise<{ png: Uint8Array; width: number; height: number }> {
+  const canvas = document.createElement('canvas');
+  const { width, height } = await renderPdfPage(pdfjsDoc, sourceIndex + 1, canvas, scale, rotation);
+  const ctx = canvas.getContext('2d')!;
+  const ratio = canvas.width / (width / scale); // canvas px per PDF point (includes devicePixelRatio)
+  for (const r of redactions) {
+    ctx.fillStyle = r.color || '#000000';
+    ctx.fillRect(r.x * ratio, r.y * ratio, Math.max(r.width, 2) * ratio, Math.max(r.height, 2) * ratio);
+  }
+  const blob: Blob = await new Promise((res, rej) =>
+    canvas.toBlob((b) => (b ? res(b) : rej(new Error('Canvas export failed'))), 'image/png')
+  );
+  return { png: new Uint8Array(await blob.arrayBuffer()), width: width / scale, height: height / scale };
+}
+
 export async function exportEditedPdf(
   originalArrayBuffer: ArrayBuffer,
   pages: PageInfo[],
@@ -29,6 +65,16 @@ export async function exportEditedPdf(
   });
 
   const outputDoc = await PDFDocument.create();
+  outputDoc.registerFontkit(fontkit);
+  let unicodeFont: Awaited<ReturnType<typeof outputDoc.embedFont>> | null = null;
+  const getUnicodeFont = async () => {
+    if (!unicodeFont) {
+      const bytes = await fetch('/fonts/DejaVuSans.ttf').then((r) => r.arrayBuffer());
+      unicodeFont = await outputDoc.embedFont(bytes, { subset: true });
+    }
+    return unicodeFont;
+  };
+  let pdfjsDoc: Awaited<ReturnType<typeof loadPdfDocument>> | null = null;
 
   // Standard fonts
   const helvetica = await outputDoc.embedFont(StandardFonts.Helvetica);
@@ -47,22 +93,42 @@ export async function exportEditedPdf(
 
   for (let i = 0; i < pages.length; i++) {
     const pageMeta = pages[i];
-    const [copiedPage] = await outputDoc.copyPages(srcDoc, [pageMeta.originalIndex]);
-
-    if (pageMeta.rotation !== undefined) {
-      copiedPage.setRotation(degrees(pageMeta.rotation));
-    }
-
-    const addedPage = outputDoc.addPage(copiedPage);
-    const { width: pageWidth, height: pageHeight } = addedPage.getSize();
-
     const pageAnnotations = annotationsByPage.get(i) || [];
+    const redactions = pageAnnotations.filter(
+      (a): a is Extract<Annotation, { type: 'redact' }> => a.type === 'redact'
+    );
+
+    let addedPage;
+    let burnedRedactions = false;
+    if (pageMeta.isBlank) {
+      addedPage = outputDoc.addPage([pageMeta.width, pageMeta.height]);
+    } else if (redactions.length > 0) {
+      try {
+        pdfjsDoc ??= await loadPdfDocument(originalArrayBuffer);
+        const r = await rasterizeRedactedPage(pdfjsDoc, pageMeta.originalIndex, pageMeta.rotation, redactions);
+        addedPage = outputDoc.addPage([r.width, r.height]);
+        const img = await outputDoc.embedPng(r.png);
+        addedPage.drawImage(img, { x: 0, y: 0, width: r.width, height: r.height });
+        burnedRedactions = true;
+      } catch (err) {
+        console.error('Secure redaction failed, falling back to overlay:', err);
+      }
+    }
+    if (!addedPage) {
+      const [copiedPage] = await outputDoc.copyPages(srcDoc, [pageMeta.originalIndex]);
+      if (pageMeta.rotation !== undefined) {
+        copiedPage.setRotation(degrees(pageMeta.rotation));
+      }
+      addedPage = outputDoc.addPage(copiedPage);
+    }
+    const { width: pageWidth, height: pageHeight } = addedPage.getSize();
 
     for (const ann of pageAnnotations) {
       try {
         switch (ann.type) {
           case 'text': {
             let font = helvetica;
+            const useUnicode = needsUnicodeFont(ann.text);
             if (ann.fontFamily === 'Times-Roman') font = timesRoman;
             else if (ann.fontFamily === 'Courier') font = courier;
             else if (ann.bold) font = helveticaBold;
@@ -100,6 +166,7 @@ export async function exportEditedPdf(
               });
             }
 
+            if (useUnicode) font = await getUnicodeFont();
             const lines = ann.text.split('\n');
             lines.forEach((line, lineIdx) => {
               addedPage.drawText(line, {
@@ -129,6 +196,7 @@ export async function exportEditedPdf(
                 start: { x: p1.x, y: pageHeight - p1.y },
                 end: { x: p2.x, y: pageHeight - p2.y },
                 thickness: thickness,
+                lineCap: LineCapStyle.Round,
                 color: rgb(strokeRgb.r, strokeRgb.g, strokeRgb.b),
                 opacity: opacity,
               });
@@ -231,6 +299,7 @@ export async function exportEditedPdf(
           }
 
           case 'redact': {
+            if (burnedRedactions) break;
             const colorRgb = hexToRgb(ann.color || '#000000');
             const pdfY = pageHeight - ann.y - ann.height;
             addedPage.drawRectangle({

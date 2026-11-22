@@ -121,6 +121,23 @@ export const PdfPageCanvas = memo(function PdfPageCanvas({
     let isCancelled = false;
     if (!doc || !canvasRef.current || !isVisible) return;
 
+    if (page.isBlank) {
+      const c = canvasRef.current;
+      const w = Math.floor(page.width * scale);
+      const h = Math.floor(page.height * scale);
+      c.width = w;
+      c.height = h;
+      c.style.width = `${w}px`;
+      c.style.height = `${h}px`;
+      const ctx = c.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+      }
+      setIsRendered(true);
+      return;
+    }
+
     renderPdfPage(doc, page.originalIndex + 1, canvasRef.current, scale, page.rotation)
       .then(() => {
         if (!isCancelled) setIsRendered(true);
@@ -134,12 +151,15 @@ export const PdfPageCanvas = memo(function PdfPageCanvas({
     return () => {
       isCancelled = true;
     };
-  }, [doc, page.originalIndex, page.rotation, scale, isVisible]);
+  }, [doc, page.originalIndex, page.rotation, page.isBlank, page.width, page.height, scale, isVisible]);
 
   // 3. Extract text content from the original PDF page for in-place editing
   useEffect(() => {
     let isCancelled = false;
-    if (!doc) return;
+    if (!doc || page.isBlank) {
+      setExtractedTexts([]);
+      return;
+    }
 
     doc.getPage(page.originalIndex + 1).then(async (pageProxy: PDFPageProxy) => {
       if (isCancelled) return;
@@ -152,7 +172,7 @@ export const PdfPageCanvas = memo(function PdfPageCanvas({
     return () => {
       isCancelled = true;
     };
-  }, [doc, page.originalIndex, page.rotation]);
+  }, [doc, page.originalIndex, page.rotation, page.isBlank]);
 
   // Convert client pointer event coordinates to PDF point coordinates (unscaled)
   const getPdfCoordinates = (e: React.PointerEvent): Point => {

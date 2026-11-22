@@ -93,6 +93,7 @@ export interface PageInfo {
   width: number; // points (72 dpi)
   height: number;
   rotation: number; // 0, 90, 180, 270
+  isBlank?: boolean; // inserted blank page (no source content)
 }
 
 export interface DocumentState {

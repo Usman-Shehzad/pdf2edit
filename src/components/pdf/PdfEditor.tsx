@@ -63,6 +63,15 @@ export function PdfEditor({ initialFile, initialArrayBuffer, onReset }: PdfEdito
   const [history, setHistory] = useState<HistoryStep[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
 
+  // Latest state mirrors so history commits never read stale closures
+  const annotationsRef = useRef<Annotation[]>([]);
+  const pagesRef = useRef<PageInfo[]>([]);
+  const historyIndexRef = useRef<number>(-1);
+  const updateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  annotationsRef.current = annotations;
+  pagesRef.current = pages;
+  historyIndexRef.current = historyIndex;
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -77,13 +86,19 @@ export function PdfEditor({ initialFile, initialArrayBuffer, onReset }: PdfEdito
   // Push state to Undo History
   const pushHistory = useCallback(
     (newAnnotations: Annotation[], newPages: PageInfo[]) => {
+      if (updateTimerRef.current) {
+        clearTimeout(updateTimerRef.current);
+        updateTimerRef.current = null;
+      }
+      const at = historyIndexRef.current;
+      historyIndexRef.current = at + 1;
       setHistory((prev) => {
-        const next = prev.slice(0, historyIndex + 1);
+        const next = prev.slice(0, at + 1);
         return [...next, { annotations: newAnnotations, pages: newPages }];
       });
-      setHistoryIndex((prev) => prev + 1);
+      setHistoryIndex(at + 1);
     },
-    [historyIndex]
+    []
   );
 
   // Load PDF document on mount
@@ -113,6 +128,11 @@ export function PdfEditor({ initialFile, initialArrayBuffer, onReset }: PdfEdito
 
   // Undo
   const handleUndo = useCallback(() => {
+    if (updateTimerRef.current) {
+      // Commit the pending edit first so undo reverts it rather than skipping it
+      pushHistory(annotationsRef.current, pagesRef.current);
+      return;
+    }
     if (historyIndex > 0) {
       const prevStep = history[historyIndex - 1];
       setAnnotations(prevStep.annotations);
@@ -120,7 +140,7 @@ export function PdfEditor({ initialFile, initialArrayBuffer, onReset }: PdfEdito
       setHistoryIndex((prev) => prev - 1);
       setSelectedAnnotationId(null);
     }
-  }, [history, historyIndex]);
+  }, [history, historyIndex, pushHistory]);
 
   // Redo
   const handleRedo = useCallback(() => {
@@ -147,8 +167,15 @@ export function PdfEditor({ initialFile, initialArrayBuffer, onReset }: PdfEdito
 
   // Update Annotation
   const handleUpdateAnnotation = (id: string, updates: Partial<Annotation>) => {
-    const updated = annotations.map((ann) => (ann.id === id ? ({ ...ann, ...updates } as Annotation) : ann));
+    const updated = annotationsRef.current.map((ann) => (ann.id === id ? ({ ...ann, ...updates } as Annotation) : ann));
+    annotationsRef.current = updated;
     setAnnotations(updated);
+    // Debounced history commit: a drag/resize/typing burst becomes one undo step
+    if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
+    updateTimerRef.current = setTimeout(() => {
+      updateTimerRef.current = null;
+      pushHistory(annotationsRef.current, pagesRef.current);
+    }, 500);
   };
 
   // Delete Annotation
@@ -240,9 +267,10 @@ export function PdfEditor({ initialFile, initialArrayBuffer, onReset }: PdfEdito
     const newPage: PageInfo = {
       pageIndex: pages.length,
       originalIndex: pages.length > 0 ? pages[0].originalIndex : 0,
-      width: 595.28,
-      height: 841.89,
+      width: pages.length > 0 ? pages[pages.length - 1].width : 595.28,
+      height: pages.length > 0 ? pages[pages.length - 1].height : 841.89,
       rotation: 0,
+      isBlank: true,
     };
     const newPages = [...pages, newPage];
     setPages(newPages);

@@ -1,6 +1,6 @@
 'use client';
 
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import { zipSync } from 'fflate';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { loadPdfDocument } from '@/lib/pdf/loader';
@@ -209,6 +209,99 @@ export async function unlockPdf(
   }
   const bytes = await rasterizePdf(doc, 2, 0.92, onProgress);
   return [{ name: `${baseName(file.name)}-unlocked.pdf`, blob: pdfBlob(bytes) }];
+}
+
+export async function rotatePdf(file: File, angle: number, ranges: string): Promise<OutputFile[]> {
+  const doc = await PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: true });
+  const total = doc.getPageCount();
+  const targets = ranges.trim() ? new Set(parseRanges(ranges, total).flat()) : new Set(doc.getPageIndices());
+  doc.getPages().forEach((p, i) => {
+    if (targets.has(i)) p.setRotation(degrees((p.getRotation().angle + angle) % 360));
+  });
+  return [{ name: `${baseName(file.name)}-rotated.pdf`, blob: pdfBlob(await doc.save()) }];
+}
+
+export async function deletePages(file: File, ranges: string): Promise<OutputFile[]> {
+  const doc = await PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: true });
+  const remove = [...new Set(parseRanges(ranges, doc.getPageCount()).flat())].sort((a, b) => b - a);
+  if (remove.length >= doc.getPageCount()) throw new Error('You cannot delete every page.');
+  remove.forEach((i) => doc.removePage(i));
+  return [{ name: `${baseName(file.name)}-trimmed.pdf`, blob: pdfBlob(await doc.save()) }];
+}
+
+export type NumberPosition = 'bottom-center' | 'bottom-right' | 'bottom-left' | 'top-center' | 'top-right' | 'top-left';
+
+export async function addPageNumbers(
+  file: File,
+  position: NumberPosition,
+  format: 'n' | 'page-n' | 'page-n-of',
+  start: number,
+  size: number
+): Promise<OutputFile[]> {
+  const doc = await PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: true });
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const pages = doc.getPages();
+  const margin = 28;
+  pages.forEach((page, i) => {
+    const n = start + i;
+    const text = format === 'n' ? `${n}` : format === 'page-n' ? `Page ${n}` : `Page ${n} of ${start + pages.length - 1}`;
+    const { width, height } = page.getSize();
+    const w = font.widthOfTextAtSize(text, size);
+    const [v, h] = position.split('-');
+    const x = h === 'left' ? margin : h === 'right' ? width - margin - w : (width - w) / 2;
+    const y = v === 'top' ? height - margin - size : margin;
+    page.drawText(text, { x, y, size, font, color: rgb(0.2, 0.2, 0.2) });
+  });
+  return [{ name: `${baseName(file.name)}-numbered.pdf`, blob: pdfBlob(await doc.save()) }];
+}
+
+export async function watermarkPdf(file: File, text: string, opacity: number, size: number): Promise<OutputFile[]> {
+  const label = text.trim();
+  if (!label) throw new Error('Enter the watermark text.');
+  const doc = await PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: true });
+  const font = await doc.embedFont(StandardFonts.HelveticaBold);
+  let w: number;
+  try {
+    w = font.widthOfTextAtSize(label, size);
+  } catch {
+    throw new Error('Watermark supports Latin letters, numbers and common punctuation only.');
+  }
+  const h = size * 0.35;
+  const a = (45 * Math.PI) / 180;
+  for (const page of doc.getPages()) {
+    const { width, height } = page.getSize();
+    // Place the text so its centre lands on the page centre after a 45 degree turn
+    const x = width / 2 - ((w / 2) * Math.cos(a) - h * Math.sin(a));
+    const y = height / 2 - ((w / 2) * Math.sin(a) + h * Math.cos(a));
+    page.drawText(label, { x, y, size, font, color: rgb(0.55, 0.55, 0.6), opacity, rotate: degrees(45) });
+  }
+  return [{ name: `${baseName(file.name)}-watermarked.pdf`, blob: pdfBlob(await doc.save()) }];
+}
+
+export async function pdfToText(file: File, onProgress?: (d: number, t: number) => void): Promise<OutputFile[]> {
+  const doc = await loadPdfDocument(await file.arrayBuffer());
+  const out: string[] = [];
+  for (let n = 1; n <= doc.numPages; n++) {
+    const page = await doc.getPage(n);
+    const content = await page.getTextContent();
+    let line = '';
+    let lastY: number | null = null;
+    for (const item of content.items) {
+      if (!('str' in item)) continue;
+      const y = item.transform[5];
+      if (lastY !== null && Math.abs(y - lastY) > 2) line += '\n';
+      else if (line && !line.endsWith('\n') && !line.endsWith(' ') && !item.str.startsWith(' ')) line += ' ';
+      line += item.str;
+      lastY = y;
+    }
+    out.push(line.trim());
+    onProgress?.(n, doc.numPages);
+  }
+  const text = out.map((t, i) => `--- Page ${i + 1} ---\n${t}`).join('\n\n');
+  if (!out.some((t) => t.length > 0)) {
+    throw new Error('No selectable text found. This looks like a scanned PDF (it would need OCR).');
+  }
+  return [{ name: `${baseName(file.name)}.txt`, blob: new Blob([text], { type: 'text/plain;charset=utf-8' }) }];
 }
 
 export function formatBytes(n: number): string {

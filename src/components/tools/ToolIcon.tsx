@@ -1,4 +1,4 @@
-import { Combine, Scissors, Minimize2, FileImage, Images, Unlock, PenTool, type LucideIcon } from 'lucide-react';
+import { Combine, Scissors, Minimize2, FileImage, Images, Unlock, PenTool, RotateCw, Trash2, Hash, Droplets, FileText, type LucideIcon } from 'lucide-react';
 import type { ToolSlug } from '@/lib/tools/registry';
 
 const ICONS: Record<ToolSlug | 'edit', LucideIcon> = {
@@ -8,6 +8,11 @@ const ICONS: Record<ToolSlug | 'edit', LucideIcon> = {
   'pdf-to-jpg': FileImage,
   'jpg-to-pdf': Images,
   'unlock-pdf': Unlock,
+  'rotate-pdf': RotateCw,
+  'delete-pdf-pages': Trash2,
+  'add-page-numbers': Hash,
+  'watermark-pdf': Droplets,
+  'pdf-to-text': FileText,
   edit: PenTool,
 };
 

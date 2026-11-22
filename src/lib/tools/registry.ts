@@ -4,7 +4,12 @@ export type ToolSlug =
   | 'compress-pdf'
   | 'pdf-to-jpg'
   | 'jpg-to-pdf'
-  | 'unlock-pdf';
+  | 'unlock-pdf'
+  | 'rotate-pdf'
+  | 'delete-pdf-pages'
+  | 'add-page-numbers'
+  | 'watermark-pdf'
+  | 'pdf-to-text';
 
 export interface ToolMeta {
   slug: ToolSlug;
@@ -115,6 +120,80 @@ export const TOOLS: ToolMeta[] = [
     faq: [
       { q: 'Can you crack a forgotten password?', a: 'No. You need the correct password. This tool only removes protection from files you are allowed to open.' },
       { q: 'Is the text still selectable?', a: 'The unlocked copy is made of page images so it works with every PDF. Text will not be selectable.' },
+    ],
+  },
+  {
+    slug: 'rotate-pdf',
+    name: 'Rotate PDF',
+    tagline: 'Fix sideways or upside-down pages.',
+    title: 'Rotate PDF Pages Online – Free & Private',
+    description: 'Rotate all or selected pages of a PDF by 90, 180 or 270 degrees in your browser and save the result.',
+    keywords: ['rotate pdf', 'rotate pdf pages', 'turn pdf sideways', 'flip pdf'],
+    tone: 'from-sky-500 to-blue-600',
+    accept: 'application/pdf,.pdf',
+    multiple: false,
+    faq: [
+      { q: 'Can I rotate only some pages?', a: 'Yes. Enter page ranges such as 2, 4-6, or leave the field empty to rotate every page.' },
+      { q: 'Is the rotation permanent?', a: 'Yes. The saved file opens with the new orientation in every PDF viewer.' },
+    ],
+  },
+  {
+    slug: 'delete-pdf-pages',
+    name: 'Delete PDF Pages',
+    tagline: 'Remove unwanted pages from a PDF.',
+    title: 'Delete Pages from PDF – Remove Pages Online, Free',
+    description: 'Remove one or more pages from a PDF in your browser. Keep the rest of the document intact. Nothing is uploaded.',
+    keywords: ['delete pdf pages', 'remove pages from pdf', 'cut pages pdf'],
+    tone: 'from-rose-500 to-red-600',
+    accept: 'application/pdf,.pdf',
+    multiple: false,
+    faq: [
+      { q: 'How do I pick pages?', a: 'Use commas and dashes, for example 1, 3-5, 9-. An open end such as 9- means to the last page.' },
+      { q: 'Can I delete every page?', a: 'No. At least one page must remain.' },
+    ],
+  },
+  {
+    slug: 'add-page-numbers',
+    name: 'Add Page Numbers',
+    tagline: 'Number the pages of any PDF.',
+    title: 'Add Page Numbers to PDF Online – Free & Private',
+    description: 'Add page numbers to a PDF in the position, style and starting number you choose. Runs in your browser.',
+    keywords: ['add page numbers to pdf', 'number pdf pages', 'pdf page numbering'],
+    tone: 'from-violet-500 to-purple-600',
+    accept: 'application/pdf,.pdf',
+    multiple: false,
+    faq: [
+      { q: 'Can I start from a number other than 1?', a: 'Yes. Set the starting number, for example 5 if this PDF continues another document.' },
+      { q: 'What formats are available?', a: 'Plain numbers (3), "Page 3", or "Page 3 of 10".' },
+    ],
+  },
+  {
+    slug: 'watermark-pdf',
+    name: 'Watermark PDF',
+    tagline: 'Stamp text such as CONFIDENTIAL across pages.',
+    title: 'Add Watermark to PDF Online – Free & Private',
+    description: 'Add a diagonal text watermark such as DRAFT or CONFIDENTIAL to every page of a PDF. Runs in your browser.',
+    keywords: ['watermark pdf', 'add watermark to pdf', 'pdf stamp text'],
+    tone: 'from-cyan-500 to-teal-600',
+    accept: 'application/pdf,.pdf',
+    multiple: false,
+    faq: [
+      { q: 'Which characters are supported?', a: 'Letters, numbers and common punctuation (Latin characters). For other scripts, add text in the editor instead.' },
+      { q: 'Can the watermark be removed afterwards?', a: 'It is drawn into the page, so keep your original file if you may need it clean.' },
+    ],
+  },
+  {
+    slug: 'pdf-to-text',
+    name: 'PDF to Text',
+    tagline: 'Extract the text from a PDF into a .txt file.',
+    title: 'PDF to Text – Extract Text from PDF Online, Free',
+    description: 'Copy all the text out of a PDF into a plain text file, right in your browser. Nothing is uploaded.',
+    keywords: ['pdf to text', 'extract text from pdf', 'pdf to txt'],
+    tone: 'from-lime-500 to-green-600',
+    accept: 'application/pdf,.pdf',
+    multiple: false,
+    faq: [
+      { q: 'Why is my result empty?', a: 'Scanned PDFs contain pictures of text, not real text, so there is nothing to extract without OCR.' },
     ],
   },
 ];

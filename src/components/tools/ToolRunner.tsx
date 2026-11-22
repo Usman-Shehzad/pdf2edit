@@ -4,6 +4,7 @@ import React, { useRef, useState } from 'react';
 import { UploadCloud, Download, ArrowUp, ArrowDown, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import type { ToolSlug } from '@/lib/tools/registry';
 import {
+  rotatePdf, deletePages, addPageNumbers, watermarkPdf, pdfToText, type NumberPosition,
   mergePdfs, splitPdf, compressPdf, pdfToImages, imagesToPdf, unlockPdf,
   countPages, formatBytes, downloadBlob, type OutputFile,
 } from '@/lib/tools/ops';
@@ -21,6 +22,11 @@ const ACTION_LABEL: Record<ToolSlug, string> = {
   'pdf-to-jpg': 'Convert to images',
   'jpg-to-pdf': 'Create PDF',
   'unlock-pdf': 'Unlock PDF',
+  'rotate-pdf': 'Rotate PDF',
+  'delete-pdf-pages': 'Delete pages',
+  'add-page-numbers': 'Add page numbers',
+  'watermark-pdf': 'Add watermark',
+  'pdf-to-text': 'Extract text',
 };
 
 export function ToolRunner({ slug, accept, multiple }: Props) {
@@ -42,6 +48,15 @@ export function ToolRunner({ slug, accept, multiple }: Props) {
   const [scale, setScale] = useState(2);
   const [fit, setFit] = useState<'a4' | 'original'>('a4');
   const [password, setPassword] = useState('');
+  const [angle, setAngle] = useState(90);
+  const [rotateRanges, setRotateRanges] = useState('');
+  const [deleteRanges, setDeleteRanges] = useState('');
+  const [numPos, setNumPos] = useState<NumberPosition>('bottom-center');
+  const [numFormat, setNumFormat] = useState<'n' | 'page-n' | 'page-n-of'>('n');
+  const [numStart, setNumStart] = useState(1);
+  const [wmText, setWmText] = useState('CONFIDENTIAL');
+  const [wmOpacity, setWmOpacity] = useState(0.25);
+  const [wmSize, setWmSize] = useState(64);
 
   const isAccepted = (f: File) => {
     const exts = accept.split(',').filter((a) => a.startsWith('.'));
@@ -105,6 +120,21 @@ export function ToolRunner({ slug, accept, multiple }: Props) {
           break;
         case 'unlock-pdf':
           out = await unlockPdf(files[0], password, onProgress);
+          break;
+        case 'rotate-pdf':
+          out = await rotatePdf(files[0], angle, rotateRanges);
+          break;
+        case 'delete-pdf-pages':
+          out = await deletePages(files[0], deleteRanges);
+          break;
+        case 'add-page-numbers':
+          out = await addPageNumbers(files[0], numPos, numFormat, Math.max(0, Math.floor(numStart) || 1), 12);
+          break;
+        case 'watermark-pdf':
+          out = await watermarkPdf(files[0], wmText, wmOpacity, wmSize);
+          break;
+        case 'pdf-to-text':
+          out = await pdfToText(files[0], onProgress);
           break;
       }
       setResults(out);
@@ -216,6 +246,66 @@ export function ToolRunner({ slug, accept, multiple }: Props) {
             )}
             {slug === 'jpg-to-pdf' && (
               <Seg value={fit} onChange={setFit} options={[['a4', 'Fit to A4'], ['original', 'Original size']]} />
+            )}
+            {slug === 'rotate-pdf' && (
+              <>
+                <Seg value={String(angle)} onChange={(v) => setAngle(+v)} options={[['90', '90° right'], ['180', '180°'], ['270', '90° left']]} />
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">Pages (leave empty for all)</span>
+                  <input value={rotateRanges} onChange={(e) => setRotateRanges(e.target.value)} placeholder="2, 4-6" className={`${inputCls} mt-1`} />
+                </label>
+              </>
+            )}
+            {slug === 'delete-pdf-pages' && (
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-700">Pages to delete</span>
+                <input value={deleteRanges} onChange={(e) => setDeleteRanges(e.target.value)} placeholder="1, 3-5" className={`${inputCls} mt-1`} />
+              </label>
+            )}
+            {slug === 'add-page-numbers' && (
+              <div className="grid sm:grid-cols-3 gap-3">
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">Position</span>
+                  <select value={numPos} onChange={(e) => setNumPos(e.target.value as NumberPosition)} className={`${inputCls} mt-1`}>
+                    <option value="bottom-center">Bottom center</option>
+                    <option value="bottom-right">Bottom right</option>
+                    <option value="bottom-left">Bottom left</option>
+                    <option value="top-center">Top center</option>
+                    <option value="top-right">Top right</option>
+                    <option value="top-left">Top left</option>
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">Format</span>
+                  <select value={numFormat} onChange={(e) => setNumFormat(e.target.value as 'n' | 'page-n' | 'page-n-of')} className={`${inputCls} mt-1`}>
+                    <option value="n">3</option>
+                    <option value="page-n">Page 3</option>
+                    <option value="page-n-of">Page 3 of 10</option>
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">Start at</span>
+                  <input type="number" min={0} value={numStart} onChange={(e) => setNumStart(+e.target.value)} className={`${inputCls} mt-1`} />
+                </label>
+              </div>
+            )}
+            {slug === 'watermark-pdf' && (
+              <>
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">Watermark text</span>
+                  <input value={wmText} onChange={(e) => setWmText(e.target.value)} className={`${inputCls} mt-1`} />
+                </label>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="text-sm font-semibold text-slate-700">Opacity: {Math.round(wmOpacity * 100)}%</span>
+                    <input type="range" min={0.05} max={0.8} step={0.05} value={wmOpacity} onChange={(e) => setWmOpacity(+e.target.value)} className="w-full accent-blue-600" />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm font-semibold text-slate-700">Size: {wmSize}</span>
+                    <input type="range" min={24} max={140} step={4} value={wmSize} onChange={(e) => setWmSize(+e.target.value)} className="w-full accent-blue-600" />
+                  </label>
+                </div>
+              </>
             )}
             {slug === 'unlock-pdf' && (
               <label className="block">

@@ -540,7 +540,7 @@ export const PdfPageCanvas = memo(function PdfPageCanvas({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       className={`relative mx-auto bg-white shadow-xl rounded-sm select-none mb-8 ${getCursorClass()} ${
-        isActivePage ? 'ring-2 ring-indigo-500/40 shadow-2xl' : ''
+        isActivePage ? 'ring-2 ring-blue-500/40 shadow-2xl' : ''
       }`}
       style={{
         width: `${displayWidth}px`,
@@ -553,7 +553,7 @@ export const PdfPageCanvas = memo(function PdfPageCanvas({
       {/* Loading Skeleton if not yet rendered */}
       {!isRendered && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/80 text-slate-400 z-1">
-          <div className="w-8 h-8 border-3 border-indigo-400 border-t-transparent rounded-full animate-spin mb-2" />
+          <div className="w-8 h-8 border-3 border-blue-400 border-t-transparent rounded-full animate-spin mb-2" />
           <span className="text-xs font-semibold">Loading page {page.pageIndex + 1}...</span>
         </div>
       )}
@@ -663,9 +663,9 @@ export const PdfPageCanvas = memo(function PdfPageCanvas({
                   isEditing
                     ? 'opacity-0 pointer-events-none'
                     : activeTool === 'editText'
-                    ? 'border-2 border-dashed border-indigo-400 bg-indigo-50/25 hover:bg-indigo-100/70 hover:border-indigo-600 shadow-2xs'
+                    ? 'border-2 border-dashed border-blue-400 bg-blue-50/25 hover:bg-blue-100/70 hover:border-blue-600 shadow-2xs'
                     : isHovered
-                    ? 'border border-dashed border-indigo-400 bg-indigo-50/40'
+                    ? 'border border-dashed border-blue-400 bg-blue-50/40'
                     : 'border border-transparent'
                 }`}
                 style={{
@@ -682,7 +682,7 @@ export const PdfPageCanvas = memo(function PdfPageCanvas({
               >
                 {/* Visual helper badge on hover */}
                 {activeTool === 'editText' && isHovered && (
-                  <div className="absolute -top-6 left-0 bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-md pointer-events-none whitespace-nowrap z-50 flex items-center gap-1">
+                  <div className="absolute -top-6 left-0 bg-blue-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-md pointer-events-none whitespace-nowrap z-50 flex items-center gap-1">
                     <Edit3 className="w-2.5 h-2.5" />
                     <span>Click to edit direct</span>
                   </div>
@@ -745,7 +745,7 @@ export const PdfPageCanvas = memo(function PdfPageCanvas({
               width: `${Math.max(editingTarget.width + 24, 60)}px`,
               height: `${Math.max(editingTarget.height, editingTarget.fontSize * 1.35)}px`,
             }}
-            className="relative z-10 bg-white text-black font-semibold border-2 border-indigo-600 rounded-xs px-1.5 py-0 outline-none shadow-sm leading-tight select-text"
+            className="relative z-10 bg-white text-black font-semibold border-2 border-blue-600 rounded-xs px-1.5 py-0 outline-none shadow-sm leading-tight select-text"
           />
 
           {/* Quick tip pill */}
@@ -773,7 +773,7 @@ export const PdfPageCanvas = memo(function PdfPageCanvas({
               key={ann.id}
               onPointerDown={(e) => startDragAnnotation(e, ann)}
               className={`annotation-item pointer-events-auto absolute group ${
-                isSelected ? 'ring-2 ring-indigo-500 ring-offset-1 z-30' : 'hover:ring-1 hover:ring-indigo-300 z-20'
+                isSelected ? 'ring-2 ring-blue-500 ring-offset-1 z-30' : 'hover:ring-1 hover:ring-blue-300 z-20'
               } ${activeTool === 'select' ? 'cursor-move' : ''}`}
               style={{
                 left: `${ann.x}px`,
@@ -816,7 +816,7 @@ export const PdfPageCanvas = memo(function PdfPageCanvas({
                         fontWeight: ann.bold ? 'bold' : 'normal',
                         fontStyle: ann.italic ? 'italic' : 'normal',
                       }}
-                      className="relative z-10 w-full h-full bg-white text-black border border-indigo-400 rounded-xs p-0.5 outline-none resize-none shadow-xs"
+                      className="relative z-10 w-full h-full bg-white text-black border border-blue-400 rounded-xs p-0.5 outline-none resize-none shadow-xs"
                     />
                   ) : (
                     <div
@@ -964,19 +964,19 @@ export const PdfPageCanvas = memo(function PdfPageCanvas({
                     <>
                       <div
                         onPointerDown={(e) => startResize(e, 'nw')}
-                        className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-indigo-600 rounded-full cursor-nwse-resize z-30 shadow-2xs"
+                        className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-600 rounded-full cursor-nwse-resize z-30 shadow-2xs"
                       />
                       <div
                         onPointerDown={(e) => startResize(e, 'ne')}
-                        className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-indigo-600 rounded-full cursor-nesw-resize z-30 shadow-2xs"
+                        className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-600 rounded-full cursor-nesw-resize z-30 shadow-2xs"
                       />
                       <div
                         onPointerDown={(e) => startResize(e, 'sw')}
-                        className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-indigo-600 rounded-full cursor-nesw-resize z-30 shadow-2xs"
+                        className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-600 rounded-full cursor-nesw-resize z-30 shadow-2xs"
                       />
                       <div
                         onPointerDown={(e) => startResize(e, 'se')}
-                        className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-indigo-600 rounded-full cursor-nwse-resize z-30 shadow-2xs"
+                        className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-600 rounded-full cursor-nwse-resize z-30 shadow-2xs"
                       />
                     </>
                   )}

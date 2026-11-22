@@ -415,7 +415,7 @@ export function PdfEditor({ initialFile, initialArrayBuffer, onReset }: PdfEdito
   const selectedAnnotation = annotations.find((a) => a.id === selectedAnnotationId) || null;
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-slate-100 font-sans">
+    <div className="flex flex-col h-screen overflow-hidden bg-workspace font-sans">
       {/* Toast Notification */}
       {toastMessage && (
         <div
@@ -472,7 +472,7 @@ export function PdfEditor({ initialFile, initialArrayBuffer, onReset }: PdfEdito
 
       {/* Active Direct Edit Banner */}
       {activeTool === 'editText' && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-40 bg-indigo-900/90 backdrop-blur-md text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg border border-indigo-400/50 flex items-center gap-2 animate-in fade-in slide-in-from-top-3">
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-40 bg-blue-900/90 backdrop-blur-md text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg border border-blue-400/50 flex items-center gap-2 animate-in fade-in slide-in-from-top-3">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <span>Direct Edit Mode: Click on any existing text in the PDF to edit it in place</span>
         </div>
@@ -500,7 +500,7 @@ export function PdfEditor({ initialFile, initialArrayBuffer, onReset }: PdfEdito
         {/* Center PDF Pages Canvas Viewport */}
         <main
           ref={containerRef}
-          className="flex-1 overflow-auto bg-slate-200/70 p-6 md:p-8 flex flex-col items-center"
+          className="flex-1 overflow-auto p-6 md:p-8 flex flex-col items-center"
         >
           {pages.map((page, index) => (
             <div

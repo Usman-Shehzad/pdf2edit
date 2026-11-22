@@ -46,8 +46,33 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <PdfDropzone onFileLoaded={handleFileLoaded} isLoading={isLoading} />
+    <div className="min-h-screen flex flex-col bg-aurora">
+      <header className="glass sticky top-0 z-20 border-b border-slate-200/60">
+        <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
+          <a href="/" className="flex items-center gap-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="PDF2Edit logo" className="w-10 h-10 object-contain drop-shadow" />
+            <span className="font-extrabold text-lg tracking-tight text-slate-900">
+              PDF<span className="text-gradient">2Edit</span>
+            </span>
+          </a>
+          <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5">
+            <span className="relative flex w-2 h-2">
+              <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-400 opacity-60 animate-ping" />
+              <span className="relative inline-flex w-2 h-2 rounded-full bg-emerald-500" />
+            </span>
+            Files never leave your device
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1">
+        <PdfDropzone onFileLoaded={handleFileLoaded} isLoading={isLoading} />
+      </main>
+
+      <footer className="border-t border-slate-200/70 py-6 text-center text-xs text-slate-500">
+        PDF2Edit · Private, in-browser PDF editing · No uploads, no tracking
+      </footer>
     </div>
   );
 }

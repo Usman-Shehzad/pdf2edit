@@ -55,7 +55,7 @@ export function PdfImageModal({ isOpen, onClose, onApplyImage }: PdfImageModalPr
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
               <ImageIcon className="w-5 h-5" />
             </div>
             <div>
@@ -74,9 +74,9 @@ export function PdfImageModal({ isOpen, onClose, onApplyImage }: PdfImageModalPr
         {/* Content */}
         <div className="p-6">
           {!dataUrl ? (
-            <label className="w-full h-52 border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-xl flex flex-col items-center justify-center cursor-pointer bg-slate-50 hover:bg-indigo-50/20 transition-all p-6 text-center group">
+            <label className="w-full h-52 border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-xl flex flex-col items-center justify-center cursor-pointer bg-slate-50 hover:bg-blue-50/20 transition-all p-6 text-center group">
               <div className="p-3 bg-white rounded-full shadow-xs mb-3 group-hover:scale-105 transition-transform">
-                <Upload className="w-6 h-6 text-indigo-600" />
+                <Upload className="w-6 h-6 text-blue-600" />
               </div>
               <span className="text-sm font-semibold text-slate-800">
                 Click to browse or drag image here
@@ -123,7 +123,7 @@ export function PdfImageModal({ isOpen, onClose, onApplyImage }: PdfImageModalPr
           <button
             onClick={handleApply}
             disabled={!dataUrl}
-            className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-xs transition-all"
+            className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-xs transition-all"
           >
             <Check className="w-4 h-4" />
             Insert onto Page

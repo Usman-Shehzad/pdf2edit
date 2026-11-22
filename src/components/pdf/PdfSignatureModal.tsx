@@ -215,7 +215,7 @@ export function PdfSignatureModal({
             onClick={() => setTab('draw')}
             className={`flex items-center gap-2 pb-3 px-3 text-sm font-semibold border-b-2 transition-all ${
               tab === 'draw'
-                ? 'border-indigo-600 text-indigo-600'
+                ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -226,7 +226,7 @@ export function PdfSignatureModal({
             onClick={() => setTab('type')}
             className={`flex items-center gap-2 pb-3 px-3 text-sm font-semibold border-b-2 transition-all ${
               tab === 'type'
-                ? 'border-indigo-600 text-indigo-600'
+                ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -237,7 +237,7 @@ export function PdfSignatureModal({
             onClick={() => setTab('upload')}
             className={`flex items-center gap-2 pb-3 px-3 text-sm font-semibold border-b-2 transition-all ${
               tab === 'upload'
-                ? 'border-indigo-600 text-indigo-600'
+                ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -263,7 +263,7 @@ export function PdfSignatureModal({
                   key={c.color}
                   onClick={() => setSignatureColor(c.color)}
                   className={`w-6 h-6 rounded-full border-2 transition-transform ${
-                    signatureColor === c.color ? 'scale-110 border-indigo-600 ring-2 ring-indigo-200' : 'border-white'
+                    signatureColor === c.color ? 'scale-110 border-blue-600 ring-2 ring-blue-200' : 'border-white'
                   }`}
                   style={{ backgroundColor: c.color }}
                   title={c.label}
@@ -315,7 +315,7 @@ export function PdfSignatureModal({
                 value={typedName}
                 onChange={(e) => setTypedName(e.target.value)}
                 placeholder="Type your full name..."
-                className="w-full px-4 py-2.5 text-base border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 text-base border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 autoFocus
               />
 
@@ -331,7 +331,7 @@ export function PdfSignatureModal({
                     onClick={() => setSelectedFont(f.font)}
                     className={`p-3 text-center rounded-xl border transition-all text-sm truncate ${
                       selectedFont === f.font
-                        ? 'border-indigo-600 bg-indigo-50/50 text-indigo-700 font-bold ring-1 ring-indigo-600'
+                        ? 'border-blue-600 bg-blue-50/50 text-blue-700 font-bold ring-1 ring-blue-600'
                         : 'border-slate-200 hover:border-slate-300 text-slate-700'
                     }`}
                     style={{ fontFamily: f.font }}
@@ -401,7 +401,7 @@ export function PdfSignatureModal({
                       applyAndMaybeSave(d, false);
                       onClose();
                     }}
-                    className="p-1 block hover:bg-indigo-50 rounded-lg"
+                    className="p-1 block hover:bg-blue-50 rounded-lg"
                     title="Use this signature"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -440,7 +440,7 @@ export function PdfSignatureModal({
               (tab === 'type' && !typedName.trim()) ||
               (tab === 'upload' && !uploadedImage)
             }
-            className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-xs transition-all"
+            className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-xs transition-all"
           >
             <Check className="w-4 h-4" />
             Place Signature

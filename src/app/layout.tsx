@@ -14,7 +14,6 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "PDF2Edit - Fast, Private & Direct Online PDF Editor",
-  icons: { icon: "/logo.png", apple: "/logo.png" },
   description: "Direct in-browser PDF editor. Add text, signatures, highlighters, drawings, redactions and reorder pages without converting files.",
 };
 

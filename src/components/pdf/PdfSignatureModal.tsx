@@ -1,7 +1,27 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { X, PenTool, Type, Upload, RotateCcw, Check } from 'lucide-react';
+import { X, PenTool, Type, Upload, RotateCcw, Check, Trash2 } from 'lucide-react';
+
+const SAVED_KEY = 'pdf2edit:saved-signatures';
+const MAX_SAVED = 6;
+
+function readSaved(): string[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SAVED_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed.filter((x) => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSaved(list: string[]) {
+  try {
+    localStorage.setItem(SAVED_KEY, JSON.stringify(list));
+  } catch {
+    // storage unavailable or full: saving is a convenience, ignore
+  }
+}
 
 interface PdfSignatureModalProps {
   isOpen: boolean;
@@ -21,6 +41,25 @@ export function PdfSignatureModal({
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [saved, setSaved] = useState<string[]>([]);
+  const [saveForLater, setSaveForLater] = useState(true);
+
+  useEffect(() => {
+    if (isOpen) setSaved(readSaved());
+  }, [isOpen]);
+
+  const applyAndMaybeSave = (dataUrl: string, remember: boolean) => {
+    if (remember) {
+      writeSaved([dataUrl, ...readSaved().filter((d) => d !== dataUrl)].slice(0, MAX_SAVED));
+    }
+    onApplySignature(dataUrl);
+  };
+
+  const removeSaved = (dataUrl: string) => {
+    const next = readSaved().filter((d) => d !== dataUrl);
+    writeSaved(next);
+    setSaved(next);
+  };
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
@@ -129,14 +168,14 @@ export function PdfSignatureModal({
       const canvas = canvasRef.current;
       if (!canvas || !hasDrawn) return;
       const dataUrl = canvas.toDataURL('image/png');
-      onApplySignature(dataUrl);
+      applyAndMaybeSave(dataUrl, saveForLater);
     } else if (tab === 'type') {
       const dataUrl = generateTypedSignatureImage();
       if (!dataUrl) return;
-      onApplySignature(dataUrl);
+      applyAndMaybeSave(dataUrl, saveForLater);
     } else if (tab === 'upload') {
       if (!uploadedImage) return;
-      onApplySignature(uploadedImage);
+      applyAndMaybeSave(uploadedImage, saveForLater);
     }
     onClose();
   };
@@ -350,8 +389,44 @@ export function PdfSignatureModal({
           )}
         </div>
 
+        {saved.length > 0 && (
+          <div className="px-6 py-3 border-t border-slate-100">
+            <p className="text-xs font-semibold text-slate-500 mb-2">Saved signatures (on this device only)</p>
+            <div className="flex gap-2 flex-wrap">
+              {saved.map((d) => (
+                <div key={d.slice(-40)} className="relative group border border-slate-200 rounded-lg bg-white">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      applyAndMaybeSave(d, false);
+                      onClose();
+                    }}
+                    className="p-1 block hover:bg-indigo-50 rounded-lg"
+                    title="Use this signature"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={d} alt="Saved signature" className="h-10 w-24 object-contain" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeSaved(d)}
+                    className="absolute -top-1.5 -right-1.5 hidden group-hover:flex bg-white border border-slate-200 rounded-full p-0.5 text-slate-500 hover:text-red-600"
+                    title="Delete saved signature"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+          <label className="mr-auto flex items-center gap-2 text-xs text-slate-600">
+            <input type="checkbox" checked={saveForLater} onChange={(e) => setSaveForLater(e.target.checked)} />
+            Save for reuse
+          </label>
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors"
